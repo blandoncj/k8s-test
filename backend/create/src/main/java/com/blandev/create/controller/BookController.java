@@ -9,21 +9,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.blandev.create.dto.CreateBookDTO;
 import com.blandev.create.entity.BookEntity;
-import com.blandev.create.service.ICreateBookService;
+import com.blandev.create.service.IBookService;
 
 @RestController
 @RequestMapping("/books")
 public class BookController {
 
-  private final ICreateBookService createBookService;
+  private final IBookService bookService;
 
-  public BookController(ICreateBookService createBookService) {
-    this.createBookService = createBookService;
+  public BookController(IBookService createBookService) {
+    this.bookService = createBookService;
   }
 
   @PostMapping
   public ResponseEntity<BookEntity> createBook(@RequestBody CreateBookDTO dto) {
-    BookEntity createdBook = createBookService.createBook(dto);
+    BookEntity createdBook = bookService.createBook(dto);
     return ResponseEntity.status(HttpStatus.CREATED).body(createdBook);
   }
 

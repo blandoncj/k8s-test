@@ -7,11 +7,11 @@ import com.blandev.create.entity.BookEntity;
 import com.blandev.create.repository.BookRepository;
 
 @Service
-public class CreateBookService implements ICreateBookService {
+public class BookService implements IBookService {
 
   private final BookRepository bookRepository;
 
-  public CreateBookService(BookRepository bookRepository) {
+  public BookService(BookRepository bookRepository) {
     this.bookRepository = bookRepository;
   }
 
