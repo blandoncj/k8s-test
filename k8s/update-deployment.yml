@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: microservicio-crear-deployment
+  name: microservicio-actualizar-deployment
   labels:
-    app: crear-app
+    app: actualizar-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: crear-app
+      app: actualizar-app
   template:
     metadata:
       labels:
-        app: crear-app
+        app: actualizar-app
     spec:
       containers:
-      - name: microservicio-crear-container
-        image: blandoncj/k8s-test-create:latest 
+      - name: microservicio-actualizar-container
+        image: blandoncj/k8s-test-update:latest 
         ports:
         - containerPort: 8080 
         env: 

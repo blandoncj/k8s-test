@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mis-microservicios-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - http: 
+      paths:
+      - path: /api/libro/crear 
+        pathType: Prefix 
+        backend:
+          service:
+            name: crear-service 
+            port:
+              number: 80 
+      
+      - path: /api/libro/leer 
+        pathType: Prefix
+        backend:
+          service:
+            name: leer-service
+            port:
+              number: 80
+      - path: /api/libro/actualizar 
+        pathType: Prefix
+        backend:
+          service:
+            name: actualizar-service
+            port:
+              number: 80
+              
+      - path: /api/libro/eliminar 
+        pathType: Prefix
+        backend:
+          service:
+            name: eliminar-service
+            port:
+              number: 80

@@ -1,27 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: microservicio-leer-deployment 
+  name: microservicio-leer-deployment
   labels:
-    app: leer-app 
+    app: leer-app
 spec:
-  replicas: 1 
+  replicas: 1
   selector:
     matchLabels:
-      app: leer-app 
+      app: leer-app
   template:
     metadata:
       labels:
-        app: leer-app 
+        app: leer-app
     spec:
       containers:
       - name: microservicio-leer-container
-        image: tu-usuario-dockerhub/microservicio-leer:v1 
+        image: blandoncj/k8s-test-read:latest 
         ports:
         - containerPort: 8080 
         env: 
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:mariadb://mariadb-service:3306/TU_BASE_DE_DATOS" 
+          value: "jdbc:mariadb://mariadb-service:3306/booksms"
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
             secretKeyRef:
