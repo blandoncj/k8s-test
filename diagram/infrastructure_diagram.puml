@@ -1,0 +1,246 @@
+@startuml
+!theme materia
+' Descomenta para otros temas, ej: !theme cerulean-outline o !theme sketchy
+
+title Diagrama de Infraestructura Detallado: Microservicios CRUD con Spring Boot y MariaDB en Kubernetes
+
+' Declaración de Estilos (opcional, para mejorar la apariencia)
+skinparam actorStyle awesome
+skinparam rectangle {
+    StereotypeFontColor #A9A9A9
+    StereotypeFontSize 10
+    FontStyle bold
+    roundCorner 20
+}
+skinparam database {
+    StereotypeFontColor #A9A9A9
+    StereotypeFontSize 10
+    roundCorner 20
+}
+skinparam cloud {
+    StereotypeFontColor #A9A9A9
+    StereotypeFontSize 10
+    roundCorner 20
+}
+skinparam node {
+    StereotypeFontColor #A9A9A9
+    StereotypeFontSize 10
+    roundCorner 15
+}
+skinparam component {
+    StereotypeFontColor #A9A9A9
+    StereotypeFontSize 10
+    roundCorner 10
+}
+skinparam hexagon {
+    StereotypeFontColor #A9A9A9
+    StereotypeFontSize 10
+    roundCorner 10
+}
+skinparam artifact {
+    StereotypeFontColor #A9A9A9
+    StereotypeFontSize 10
+    roundCorner 10
+}
+
+' ====== Actores y Sistemas Externos ======
+actor "Usuario (vía Postman)" as User
+cloud "Internet / Red Externa" as Internet {
+  interface "Firewall / WAF\n(Conceptual)" as WAF
+}
+
+' ====== Clúster Kubernetes ======
+package "Entorno Kubernetes (Minikube)" <<Cluster>> {
+  node "Nodo Minikube (Host VM)" as MinikubeNode {
+    folder "/mnt/data/mariadb-storage\n(hostPath)" as HostPath <<Minikube Storage>>
+    note right of HostPath: Almacenamiento persistente local\npara desarrollo en Minikube.
+  }
+
+  package "Namespace: 'microservices-ns' (Ejemplo)" <<K8s Namespace>> {
+
+    component "Controlador Ingress\n(nginx)" as IngressCtrl <<Gateway>>
+    note left of IngressCtrl
+      IP Externa: (Minikube IP)
+      Puertos: 80 (HTTP), 443 (HTTPS)
+      Gestiona el enrutamiento basado en paths.
+    end note
+
+    ' ------ Microservicio: Producto-CREATE ------
+    package "Microservicio: Producto-CREATE" <<Microservice Stack>> {
+      hexagon "svc/producto-create-svc" as CreateSvc <<K8s Service (ClusterIP)>>
+      note top of CreateSvc: Puerto: 80\nTargetPort: 8081
+      node "deploy/producto-create-deployment" as CreateDeploy <<K8s Deployment>> {
+        ' El ReplicaSet es gestionado implícitamente por el Deployment
+        artifact "pod/producto-create-pod-1" as CreatePod1 <<K8s Pod>> {
+          component "app: producto-create-container" as CreateContainer1 <<Container (Spring Boot)>>
+          note right of CreateContainer1
+            Imagen: tuusuario/producto-create-service:v1
+            Puerto Interno: 8081
+            Recursos: CPU, Memoria
+          end note
+        }
+        artifact "..." as CreatePodN <<K8s Pod>> {
+           component "app: producto-create-container" as CreateContainerN <<Container (Spring Boot)>>
+        }
+      }
+      CreateSvc ..> CreateDeploy : selecciona pods vía labels
+      CreateDeploy ..> CreatePod1 : gestiona/crea
+      CreateDeploy ..> CreatePodN : gestiona/crea
+    }
+
+    ' ------ Microservicio: Producto-READ ------
+    package "Microservicio: Producto-READ" <<Microservice Stack>> {
+      hexagon "svc/producto-read-svc" as ReadSvc <<K8s Service (ClusterIP)>>
+      note top of ReadSvc: Puerto: 80\nTargetPort: 8082
+      node "deploy/producto-read-deployment" as ReadDeploy <<K8s Deployment>> {
+        ' El ReplicaSet es gestionado implícitamente por el Deployment
+        artifact "pod/producto-read-pod-1" as ReadPod1 <<K8s Pod>> {
+          component "app: producto-read-container" as ReadContainer1 <<Container (Spring Boot)>>
+          note right of ReadContainer1
+            Imagen: tuusuario/producto-read-service:v1
+            Puerto Interno: 8082
+          end note
+        }
+        artifact "..." as ReadPodN <<K8s Pod>> {
+          component "app: producto-read-container" as ReadContainerN <<Container (Spring Boot)>>
+        }
+      }
+      ReadSvc ..> ReadDeploy
+      ReadDeploy ..> ReadPod1 : gestiona/crea
+      ReadDeploy ..> ReadPodN : gestiona/crea
+    }
+
+    ' ------ Microservicio: Producto-UPDATE ------
+    package "Microservicio: Producto-UPDATE" <<Microservice Stack>> {
+      hexagon "svc/producto-update-svc" as UpdateSvc <<K8s Service (ClusterIP)>>
+      note top of UpdateSvc: Puerto: 80\nTargetPort: 8083
+      node "deploy/producto-update-deployment" as UpdateDeploy <<K8s Deployment>> {
+        ' El ReplicaSet es gestionado implícitamente por el Deployment
+        artifact "pod/producto-update-pod-1" as UpdatePod1 <<K8s Pod>> {
+          component "app: producto-update-container" as UpdateContainer1 <<Container (Spring Boot)>>
+          note right of UpdateContainer1
+            Imagen: tuusuario/producto-update-service:v1
+            Puerto Interno: 8083
+          end note
+        }
+        artifact "..." as UpdatePodN <<K8s Pod>> {
+          component "app: producto-update-container" as UpdateContainerN <<Container (Spring Boot)>>
+        }
+      }
+      UpdateSvc ..> UpdateDeploy
+      UpdateDeploy ..> UpdatePod1 : gestiona/crea
+      UpdateDeploy ..> UpdatePodN : gestiona/crea
+    }
+
+    ' ------ Microservicio: Producto-DELETE ------
+    package "Microservicio: Producto-DELETE" <<Microservice Stack>> {
+      hexagon "svc/producto-delete-svc" as DeleteSvc <<K8s Service (ClusterIP)>>
+      note top of DeleteSvc: Puerto: 80\nTargetPort: 8084
+      node "deploy/producto-delete-deployment" as DeleteDeploy <<K8s Deployment>> {
+        ' El ReplicaSet es gestionado implícitamente por el Deployment
+        artifact "pod/producto-delete-pod-1" as DeletePod1 <<K8s Pod>> {
+          component "app: producto-delete-container" as DeleteContainer1 <<Container (Spring Boot)>>
+          note right of DeleteContainer1
+            Imagen: tuusuario/producto-delete-service:v1
+            Puerto Interno: 8084
+          end note
+        }
+        artifact "..." as DeletePodN <<K8s Pod>> {
+          component "app: producto-delete-container" as DeleteContainerN <<Container (Spring Boot)>>
+        }
+      }
+      DeleteSvc ..> DeleteDeploy
+      DeleteDeploy ..> DeletePod1 : gestiona/crea
+      DeleteDeploy ..> DeletePodN : gestiona/crea
+    }
+
+    ' ------ Base de Datos: MariaDB ------
+    package "Base de Datos: MariaDB" <<Database Stack>> {
+      hexagon "svc/mariadb-service" as MariaDBSvc <<K8s Service (ClusterIP)>>
+      note right of MariaDBSvc
+        IP Interna Cluster:
+        mariadb-service.microservices-ns.svc.cluster.local
+        Puerto: 3306
+      end note
+
+      node "deploy/mariadb-deployment" as MariaDBDeploy <<K8s Deployment>> {
+        ' El ReplicaSet es gestionado implícitamente por el Deployment
+        artifact "pod/mariadb-pod" as MariaDBPod <<K8s Pod>> {
+          component "app: mariadb-container" as MariaDBContainer <<Container (MariaDB)>>
+          note right of MariaDBContainer
+            Imagen: mariadb:10.11 (o versión usada)
+            Puerto Interno: 3306
+            Variables de Entorno:
+            MARIADB_ROOT_PASSWORD,
+            MARIADB_USER,
+            MARIADB_PASSWORD,
+            MARIADB_DATABASE
+          end note
+        }
+      }
+      MariaDBSvc ..> MariaDBDeploy
+      MariaDBDeploy ..> MariaDBPod : gestiona/crea
+
+      database "secret/mariadb-credentials" as MariaDBCreds <<K8s Secret>>
+      note top of MariaDBCreds: Almacena credenciales sensibles\nde forma segura (codificadas en Base64).
+
+      MariaDBDeploy ..> MariaDBCreds : utiliza variables desde
+
+      database "pvc/mariadb-pvc" as MariaDBPvc <<K8s PersistentVolumeClaim>>
+      note top of MariaDBPvc
+        Solicita almacenamiento persistente.
+        Ej: 2Gi, AccessMode: ReadWriteOnce
+        StorageClass: manual
+      end note
+
+      MariaDBPod ..> MariaDBPvc : monta volumen en /var/lib/mysql
+    }
+
+    database "pv/mariadb-pv" as MariaDBPv <<K8s PersistentVolume>>
+    note top of MariaDBPv
+      Provee el almacenamiento físico.
+      Ej: 2Gi, AccessMode: ReadWriteOnce
+      StorageClass: manual
+      Path en Nodo: /mnt/data/mariadb-storage
+    end note
+    ' Salto de línea explícito antes de cerrar el paquete del Namespace
+
+  } 
+  ' Fin Namespace: 'microservices-ns' (Ejemplo)
+
+} 
+' Fin Entorno Kubernetes (Minikube)
+
+' ====== Relaciones y Flujos de Datos ======
+User -> Internet : 1. Petición HTTP (CRUD)
+Internet -> WAF : 2. Pasa por Firewall
+WAF -> IngressCtrl : 3. Llega al Ingress Controller\n   (ej. (Minikube IP)/<context-path>/productos)
+
+IngressCtrl ..> CreateSvc : 4a. Ruta: /create/productos (POST)
+IngressCtrl ..> ReadSvc   : 4b. Ruta: /read/productos (GET), /read/productos/{id} (GET)
+IngressCtrl ..> UpdateSvc : 4c. Ruta: /update/productos/{id} (PUT)
+IngressCtrl ..> DeleteSvc : 4d. Ruta: /delete/productos/{id} (DELETE)
+
+' Conexiones de los microservicios a la BD
+CreateContainer1 --> MariaDBSvc : 5a. Conexión JDBC (Crear datos)
+ReadContainer1   --> MariaDBSvc : 5b. Conexión JDBC (Leer datos)
+UpdateContainer1 --> MariaDBSvc : 5c. Conexión JDBC (Actualizar datos)
+DeleteContainer1 --> MariaDBSvc : 5d. Conexión JDBC (Eliminar datos)
+
+' Relaciones de almacenamiento persistente
+MariaDBPvc ..> MariaDBPv : 6. Enlazado a (Bound To)
+MariaDBPv ..> HostPath : 7. Utiliza almacenamiento físico del nodo Minikube
+
+' Leyenda (opcional, pero útil para diagramas complejos)
+legend right
+  |= Leyenda de Elementos |= Tipo de Elemento |
+  | Actor (Usuario) | <img:https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/sprites/actor.png{scale=0.5}> |
+  | Componente (Contenedor, App) | <img:https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/sprites/component.png{scale=0.5}> |
+  | Nodo (Deployment, VM Host) | <img:https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/sprites/node.png{scale=0.5}> |
+  | Base de Datos / Secret / PV / PVC | <img:https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/sprites/database.png{scale=0.5}> |
+  | Servicio K8s (Hexágono) | <img:https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/sprites/queue.png{scale=0.5}> |
+  | Cloud / Paquete / Namespace | <img:https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/sprites/boundary.png{scale=0.5}> |
+  | Flecha de Flujo de Datos | -> |
+  | Flecha de Relación / Enlace | ..> |
+end legend
+@enduml
