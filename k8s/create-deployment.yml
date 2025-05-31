@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microservicio-crear-deployment
+  labels:
+    app: crear-app
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: crear-app
+  template:
+    metadata:
+      labels:
+        app: crear-app
+    spec:
+      containers:
+      - name: microservicio-crear-container
+        image: tu-usuario-dockerhub/microservicio-crear:v1 
+        ports:
+        - containerPort: 8080 
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mariadb://mariadb-service:3306/TU_BASE_DE_DATOS" 
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-credentials 
+              key: MARIADB_USER 
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-credentials
+              key: MARIADB_PASSWORD
